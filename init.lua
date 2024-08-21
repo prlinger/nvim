@@ -432,6 +432,14 @@ plugins = {
 			})
 		end,
 	},
+	{
+		"numToStr/Comment.nvim",
+		opts = {
+			-- default VISUAL mode comment: gc
+			-- default NORMAL mode (comment current line): gcc
+			-- add any options here
+		},
+	},
 }
 opts = {}
 
