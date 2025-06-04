@@ -1,14 +1,28 @@
 vim.cmd("set expandtab")
 vim.cmd("set tabstop")
 vim.cmd("set softtabstop=4")
-vim.cmd("set shiftwidth=4")
+-- vim.cmd("set shiftwidth=4")
 vim.cmd("set number")
 vim.cmd("set relativenumber")
 vim.cmd("set smartindent")
+-- time in ms. default is 50.
+-- vim.cmd("set ttimeoutlen=150")
 
 --  Vim Remaps
 vim.g.mapleader = " "
 vim.keymap.set("n", "<leader>ex", vim.cmd.Ex)
+
+-- print("afdasdfasdfasdfasdfasf")
+-- print(vim.g.terminal_emulator)
+-- print(vim.env.TERM)
+
+-- This is for ubuntu. TODO: Make it conditional somehow.
+-- Note, to get the following working on ubuntu, I had to install xclip.
+-- vim.opt.clipboard = "unnamedplus" -- Note, this makes the default clipboard the system clipboard.
+-- vim.opt.clipboard = "xterm_clipboard"
+-- vim.g.clipboard = "xterm_clipboard"
+-- vim.cmd("set clipboard=clipboard")
+-- set clipboard+=unnamedplus
 
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
@@ -63,6 +77,39 @@ plugins = {
 	},
 	{
 		"tpope/vim-fugitive", -- this is a Git plugin.
+	},
+	{
+		-- Plugin for showing gitdiffs and such in-line.
+		"lewis6991/gitsigns.nvim",
+		config = function()
+			-- require("gitsigns").setup() -- Original
+			require("gitsigns").setup({
+				on_attach = function(bufnr)
+					local gitsigns = require("gitsigns")
+
+					local function map(mode, l, r, opts)
+						opts = opts or {}
+						opts.buffer = bufnr
+						vim.keymap.set(mode, l, r, opts)
+					end
+
+					-- git blame.
+					-- map("n", "<leader>gb", gitsigns.blame)
+					map("n", "<leader>gb", function()
+						gitsigns.blame()
+					end)
+					-- Git diff HEAD; shows the diff for the head.
+					map("n", "<leader>gdh", function()
+						gitsigns.change_base("HEAD")
+					end)
+					-- Git diff reset; reset the diff shown.
+					-- map("n", "<leader>gdr", gitsigns.change_base(""))
+					map("n", "<leader>gdr", function()
+						gitsigns.change_base()
+					end)
+				end,
+			})
+		end,
 	},
 	{
 		"neovim/nvim-lspconfig",
@@ -127,7 +174,8 @@ plugins = {
 					map("gd", require("telescope.builtin").lsp_definitions, "[G]oto [D]efinition")
 
 					-- Find references for the word under your cursor.
-					map("gr", require("telescope.builtin").lsp_references, "[G]oto [R]eferences")
+					-- Original mapping: gr
+					map("fu", require("telescope.builtin").lsp_references, "[F]ind [U]sages") --"[G]oto [R]eferences")
 
 					-- Jump to the implementation of the word under your cursor.
 					--  Useful when your language has ways of declaring types without an actual implementation.
@@ -172,7 +220,8 @@ plugins = {
 					--
 					-- When you move your cursor, the highlights will be cleared (the second autocommand).
 					local client = vim.lsp.get_client_by_id(event.data.client_id)
-					if client and client.server_capabilities.documentHighlightProvider then
+
+					if client and client.supports_method(vim.lsp.protocol.Methods.textDocument_documentHighlight) then
 						local highlight_augroup =
 							vim.api.nvim_create_augroup("kickstart-lsp-highlight", { clear = false })
 						vim.api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
@@ -196,19 +245,13 @@ plugins = {
 						})
 					end
 
-					-- Toggle diagnostics. Added by me.
-					if client then -- and client.server_capabilities.diagnosticProvider then -- and vim.diagnostic then
-						map("<leader>td", function()
-							vim.diagnostic.enable(not vim.diagnostic.is_enabled())
-						end, "[T]oggle [D]iagnostic")
-					end
 					-- The following autocommand is used to enable inlay hints in your
 					-- code, if the language server you are using supports them
 					--
 					-- This may be unwanted, since they displace some of your code
-					if client and client.server_capabilities.inlayHintProvider and vim.lsp.inlay_hint then
+					if client and client.supports_method(vim.lsp.protocol.Methods.textDocument_inlayHint) then
 						map("<leader>th", function()
-							vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled())
+							vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({ bufnr = event.buf }))
 						end, "[T]oggle Inlay [H]ints")
 					end
 				end,
@@ -295,7 +338,7 @@ plugins = {
 		lazy = false,
 		keys = {
 			{
-				"<leader>f",
+				"<leader>lint",
 				function()
 					require("conform").format({ async = true, lsp_fallback = true })
 				end,
@@ -309,7 +352,7 @@ plugins = {
 				-- Disable "format_on_save lsp_fallback" for languages that don't
 				-- have a well standardized coding style. You can add additional
 				-- languages here or re-enable it for the disabled ones.
-				local disable_filetypes = { c = true, cpp = true, rust = false }
+				local disable_filetypes = { c = true, cpp = true, python = true, rust = true }
 				return {
 					timeout_ms = 500,
 					lsp_fallback = not disable_filetypes[vim.bo[bufnr].filetype],
@@ -458,8 +501,8 @@ vim.cmd([[colorscheme tokyonight-night]]) -- night, storm, day, moon
 -- Telescope remaps
 local builtin = require("telescope.builtin")
 vim.keymap.set("n", "<leader>ff", builtin.find_files, {})
-vim.keymap.set("n", "<leader>fgit", builtin.git_files, {}) -- Find only git files.
--- live_grep requires ripgrep to be installed: https://github.com/BurntSushi/ripgrep
+-- vim.keymap.set("n", "<leader>fgit", builtin.git_files, {}) -- Find only git files.
+-- NOTE: live_grep requires ripgrep to be installed: https://github.com/BurntSushi/ripgrep
 vim.keymap.set("n", "<leader>fg", builtin.live_grep, {}) -- grep in files (in current working dir).
 vim.keymap.set("n", "<leader>fstr", builtin.grep_string, {}) -- grep string under cursor (in current working dir).
 vim.keymap.set("n", "<leader>fb", builtin.buffers, {})
@@ -470,27 +513,32 @@ local harpoon = require("harpoon")
 vim.keymap.set("n", "<leader>ha", function()
 	harpoon:list():add()
 end)
-vim.keymap.set("n", "<C-e>", function()
+vim.keymap.set("n", "<C-h>", function()
 	harpoon.ui:toggle_quick_menu(harpoon:list())
 end)
-vim.keymap.set("n", "<C-h>", function()
+vim.keymap.set("n", "<C-j>", function()
 	harpoon:list():select(1)
 end)
-vim.keymap.set("n", "<C-j>", function()
+vim.keymap.set("n", "<C-k>", function()
 	harpoon:list():select(2)
 end)
-vim.keymap.set("n", "<C-k>", function()
+vim.keymap.set("n", "<C-l>", function()
 	harpoon:list():select(3)
 end)
-vim.keymap.set("n", "<C-l>", function()
-	harpoon:list():select(4)
-end)
+-- Not working for some reason - I think that ; terminates the thing.
+-- vim.keymap.set("n", "<C-;>", function()
+-- 	harpoon:list():select(4)
+-- end)
 
 -- undotree setup
 vim.keymap.set("n", "<leader>u", vim.cmd.UndotreeToggle)
 
 -- vim-fugitive setup (a git plugin)
 vim.keymap.set("n", "<leader>gs", vim.cmd.Git)
+-- NOTE: I've remapped this in the gitsigns plugin.
+-- vim.keymap.set("n", "<leader>gb", function()
+-- 	vim.cmd.Git("blame")
+-- end)
 
 -- LSP setup/configuration
 -- local lspconfig = require'lspconfig'
@@ -507,3 +555,9 @@ vim.keymap.set("n", "<leader>gs", vim.cmd.Git)
 --        }
 --    }
 --})
+
+-- Toggle diagnostics (the in-line warnings/errors (aka, hints)).
+-- vim.diagnostic.enable(true)
+vim.keymap.set("n", "<leader>td", function()
+	vim.diagnostic.enable(not vim.diagnostic.is_enabled())
+end)
