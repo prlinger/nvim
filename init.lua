@@ -196,6 +196,12 @@ plugins = {
 						})
 					end
 
+					-- Toggle diagnostics. Added by me.
+					if client then -- and client.server_capabilities.diagnosticProvider then -- and vim.diagnostic then
+						map("<leader>td", function()
+							vim.diagnostic.enable(not vim.diagnostic.is_enabled())
+						end, "[T]oggle [D]iagnostic")
+					end
 					-- The following autocommand is used to enable inlay hints in your
 					-- code, if the language server you are using supports them
 					--
@@ -303,7 +309,7 @@ plugins = {
 				-- Disable "format_on_save lsp_fallback" for languages that don't
 				-- have a well standardized coding style. You can add additional
 				-- languages here or re-enable it for the disabled ones.
-				local disable_filetypes = { c = true, cpp = true }
+				local disable_filetypes = { c = true, cpp = true, rust = false }
 				return {
 					timeout_ms = 500,
 					lsp_fallback = not disable_filetypes[vim.bo[bufnr].filetype],
