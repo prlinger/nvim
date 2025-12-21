@@ -11,6 +11,8 @@ vim.cmd("set smartindent")
 --  Vim Remaps
 vim.g.mapleader = " "
 vim.keymap.set("n", "<leader>ex", vim.cmd.Ex)
+-- Terminal mode: map escape to exit terminal mode.
+vim.keymap.set("t", "<Esc>", [[<C-\><C-n>]])
 
 -- print("afdasdfasdfasdfasdfasf")
 -- print(vim.g.terminal_emulator)
@@ -23,6 +25,13 @@ vim.keymap.set("n", "<leader>ex", vim.cmd.Ex)
 -- vim.g.clipboard = "xterm_clipboard"
 -- vim.cmd("set clipboard=clipboard")
 -- set clipboard+=unnamedplus
+
+-- A command to copy the current path. Doesn't work?
+-- vim.api.nvim_create_user_command("Ywd", function()
+-- 	local path = vim.fn.expand("%:p")
+-- 	vim.fn.setreg("+", path)
+-- 	vim.notify('Copied "' .. path .. '" to the clipboard!')
+-- end, {})
 
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
@@ -276,7 +285,15 @@ plugins = {
 			local servers = {
 				-- clangd = {},
 				-- gopls = {},
-				pyright = {},
+				-- pyright = {},
+				-- pyright = {
+				--                                     settings = {
+				--                                             python = {
+				--                                                     completion =
+				--                                             }
+				--                                     }
+				--                             },
+				basedpyright = {},
 				rust_analyzer = {},
 				-- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
 				--
